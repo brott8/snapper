@@ -347,7 +347,7 @@ def get_status():
     error_count = re.search(r'^DANGER! In the array there are (?P<error_count>\d+) errors!',
                             snapraid_status, flags=re.MULTILINE)
     zero_subsecond_count = re.search(
-        r'^You have (?P<touch_files>\d+) files with( a)? zero sub-second timestamp', snapraid_status,
+        r'^You have (?P<touch_files>\d+) files with (?:a )?zero sub-second timestamp', snapraid_status,
         flags=re.MULTILINE)
 
     sync_in_progress = bool(
@@ -564,7 +564,7 @@ def get_snapraid_config():
         snapraid_config = file.read()
 
     #Split parity handling
-    file_regex = re.compile(r'^(content|parity) +(.+/\w+.(?:content|parity)) *$',
+    file_regex = re.compile(r'^(content|(?:\d+-)?parity) +(.+/\w+.(?:content|(?:\d+-)?parity)) *$',
                             flags=re.MULTILINE)
     parity_files = []
     content_files = []
@@ -708,11 +708,13 @@ def main():
             'total_time': total_time
         }
 
-        email_report = create_email_report(report_data)
-        send_email('SnapRAID Job Completed Successfully', email_report)
+        if config['notifications']['email']['enabled']:
+            email_report = create_email_report(report_data)
+            send_email('SnapRAID Job Completed Successfully', email_report)
 
-        apprise_report = create_apprise_report(report_data)
-        send_apprise('SnapRAID Job Completed Successfully', apprise_report)
+        if config['notifications']['apprise']['enabled']:
+            apprise_report = create_apprise_report(report_data)
+            send_apprise('SnapRAID Job Completed Successfully', apprise_report)
 
         if config['notifications']['discord']['enabled']:
             (discord_message, embeds) = create_discord_report(report_data)
